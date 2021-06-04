@@ -26,20 +26,28 @@ dat_dev['Relevance'] = dat_dev['Relevance'].astype(str).apply(lambda x: '__label
 dat_train['Polarity'] = dat_train['Polarity'].astype(str).apply(lambda x: '__label__' + x)
 dat_dev['Polarity'] = dat_dev['Polarity'].astype(str).apply(lambda x: '__label__' + x)
 
-# Saving Files for fastText Task A
+# Saving Files for fastText
 dat_train[['Document', 'Relevance']].to_csv('ft_train_A.txt', index = False, sep = ' ', header = None, quoting = csv.QUOTE_NONE, quotechar = "", escapechar = " ")
 dat_dev[['Document', 'Relevance']].to_csv('ft_dev_A.txt', index = False, sep = ' ', header = None, quoting = csv.QUOTE_NONE, quotechar = "", escapechar = " ")
+dat_train[['Document', 'Polarity']].to_csv('ft_train_B.txt', index = False, sep = ' ', header = None, quoting = csv.QUOTE_NONE, quotechar = "", escapechar = " ")
+dat_dev[['Document', 'Polarity']].to_csv('ft_dev_B.txt', index = False, sep = ' ', header = None, quoting = csv.QUOTE_NONE, quotechar = "", escapechar = " ")
 
-# Train fastText Task A
+# Train fastText
 model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2)
+model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2)
 
-# Test fastText Task A
+# Test fastText
 evaluation_model_ft_A = model_ft_A.test('ft_dev_A.txt')[1:3]  # precision and recall
+evaluation_model_ft_B = model_ft_B.test('ft_dev_B.txt')[1:3]  # precision and recall
 model_ft_A.predict(dat_dev.iloc[86,1])  # predict individual observation
+model_ft_B.predict(dat_dev.iloc[86,1])  # predict individual observation
 
 # Performance mit Micro-Averaged F1-Score (Berechnung hier funktioniert nur bei 2 Klassen)
 micro_f1_ft_A = 2*(evaluation_model_ft_A[0]*evaluation_model_ft_A[1]/(evaluation_model_ft_A[0]+evaluation_model_ft_A[1]))
+micro_f1_ft_B = 2*(evaluation_model_ft_B[0]*evaluation_model_ft_B[1]/(evaluation_model_ft_B[0]+evaluation_model_ft_B[1]))
 
 # Confusion Matrix
 dat_dev['Relevance_predicted_ft'] = dat_dev['Document'].apply(lambda x: model_ft_A.predict(x)[0][0])
+dat_dev['Polarity_predicted_ft'] = dat_dev['Document'].apply(lambda x: model_ft_B.predict(x)[0][0])
 confusion_matrix(dat_dev['Relevance'], dat_dev['Relevance_predicted_ft'], normalize= 'all')
+confusion_matrix(dat_dev['Polarity'], dat_dev['Polarity_predicted_ft'], normalize= 'all')
