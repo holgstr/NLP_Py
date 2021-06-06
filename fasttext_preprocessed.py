@@ -2,7 +2,7 @@
 import csv, re
 import numpy as np
 import pandas as pd
-import fasttext
+import learner_fasttext
 import matplotlib.pyplot as plt
 from gensim.utils import simple_preprocess
 from sklearn.metrics import confusion_matrix
@@ -22,4 +22,4 @@ dat_test = dat_test[dat_test['Document'].notna()]
 print(dat_train[dat_train['Document'].str.contains('@DB')]['Document'])
 re.findall("@DB_Bahn", dat_train.iloc[8,1])
 
-dat_train['Document'] = dat_train['Document'].str.replace("@DB_Bahn|@Bahn_Info", '<tokendbusername>')
+dat_train['Document'] = dat_train['Document'].str.replace("@DB_Bahn|@Bahn_Info", '<tokendbusername>', regex = True)
