@@ -2,7 +2,7 @@
 import csv, re
 import numpy as np
 import pandas as pd
-import learner_fasttext
+import fasttext
 import matplotlib.pyplot as plt
 from gensim.utils import simple_preprocess
 from sklearn.metrics import confusion_matrix
