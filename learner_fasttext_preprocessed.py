@@ -44,7 +44,7 @@ model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2, epoch =
 model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2, epoch = 25)
 
 # Train (manually) autotuned fastText
-for x in range(50):
+for x in range(200):
     s_wordNgrams = np.random.randint(1, 5)
     s_epoch = np.random.randint(5, 61)
     s_lr = np.random.uniform(0.1, 1.0)
@@ -65,17 +65,17 @@ for x in range(50):
     current_f1_A = m_f1(model_ft_A_tuned, 'ft_dev_A.txt')
     current_f1_B = m_f1(model_ft_B_tuned, 'ft_dev_B.txt')
     if x == 0:
-        best_model_A = model_ft_A_tuned
+        best_model_ft_A_pre = model_ft_A_tuned
         best_f1_A = current_f1_A
-        best_model_B = model_ft_B_tuned
+        best_model_ft_B_pre = model_ft_B_tuned
         best_f1_B = current_f1_B
     if current_f1_A > best_f1_A:
         best_f1_A = current_f1_A
-        best_model_A = model_ft_A_tuned
+        best_model_ft_A_pre = model_ft_A_tuned
     if current_f1_B > best_f1_B:
         best_f1_B = current_f1_B
-        best_model_B = model_ft_B_tuned
-    print("Durchlauf", x+1, "/50")
+        best_model_ft_B_pre = model_ft_B_tuned
+    print("Durchlauf", x+1, "/200")
 del model_ft_A_tuned, model_ft_B_tuned
 
 # Test fastText
@@ -85,10 +85,10 @@ def m_f1(model, eval_file):
   r = model.test(eval_file)[2]
   return 2*(p*r/(p+r))
 
-f1_ft = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B", "dia_B"],
+f1_ft_preprocessed = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B", "dia_B"],
                            'naive': [m_f1(model_ft_A, 'ft_dev_A.txt'), m_f1(model_ft_A, 'ft_syn_A.txt'),
                                      m_f1(model_ft_A, 'ft_dia_A.txt'), m_f1(model_ft_B, 'ft_dev_B.txt'),
                                      m_f1(model_ft_B, 'ft_syn_B.txt'), m_f1(model_ft_B, 'ft_dia_B.txt')],
-                           'tuned': [m_f1(best_model_A, 'ft_dev_A.txt'), m_f1(best_model_A, 'ft_syn_A.txt'),
-                                     m_f1(best_model_A, 'ft_dia_A.txt'), m_f1(best_model_B, 'ft_dev_B.txt'),
-                                     m_f1(best_model_B, 'ft_syn_B.txt'), m_f1(best_model_B, 'ft_dia_B.txt')]})
+                           'tuned': [m_f1(best_model_A_ft_pre, 'ft_dev_A.txt'), m_f1(best_model_A_ft_pre, 'ft_syn_A.txt'),
+                                     m_f1(best_model_A_ft_pre, 'ft_dia_A.txt'), m_f1(best_model_B_ft_pre, 'ft_dev_B.txt'),
+                                     m_f1(best_model_B_ft_pre, 'ft_syn_B.txt'), m_f1(best_model_B_ft_pre, 'ft_dia_B.txt')]})
