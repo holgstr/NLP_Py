@@ -98,3 +98,10 @@ f1_ft_unprocessed = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_
   confusion_matrix(dat_test['Relevance'], dat_test['Relevance_predicted_ft'], normalize= 'all')
   confusion_matrix(dat_dev['Polarity'], dat_dev['Polarity_predicted_ft'], normalize= 'all')
   confusion_matrix(dat_test['Polarity'], dat_test['Polarity_predicted_ft'], normalize= 'all')
+
+(dat_train[dat_train['URL'].str.contains('(?<=://)')]['URL']).count()
+re.findall('(?<=://)a','https://abc')
+
+
+dat_train['URL'].str.extract(pat = '((\w|-)*(?=.com/|.de/|.net/|.ch/))').iloc[120:179,0]
+pd.options.display.max_rows
