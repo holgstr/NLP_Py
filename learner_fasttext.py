@@ -13,32 +13,25 @@ dat_train = pd.read_csv("/Users/holgerlowe/Documents/NLP_Data/train.tsv", names 
 dat_dev = pd.read_csv('/Users/holgerlowe/Documents/NLP_Data/dev.tsv', names = header_list, usecols = range(0,4), sep = '\t')
 dat_test = pd.read_csv('/Users/holgerlowe/Documents/NLP_Data/test.tsv', names = header_list, usecols = range(0,4), sep = '\t')
 
-# NaN in Documents entfernen
-dat_train = dat_train[dat_train['Document'].notna()]
-dat_dev = dat_dev[dat_dev['Document'].notna()]
-dat_test = dat_test[dat_test['Document'].notna()]
+# Daten vorbereiten für fasttext
+def fasttext_df_preprocess(df, df_name):
+  # Delete NAs
+  df = df.dropna(subset=['URL', 'Document']).reset_index(drop=True)
+  # Tokenization
+  df.iloc[:, 1] = df.iloc[:, 1].apply(lambda x: ' '.join(simple_preprocess(x)))
+  # Preparing Labels for fastText
+  df['Relevance'] = df['Relevance'].astype(str).apply(lambda x: '__label__' + x)
+  df['Polarity'] = df['Polarity'].astype(str).apply(lambda x: '__label__' + x)
+  # Saving Files for fastText
+  df[['Document', 'Relevance']].to_csv(os.path.join('ft_' + df_name + '_A.txt'), index=False, sep=' ', header=None, quoting=csv.QUOTE_NONE,
+                                             quotechar="", escapechar=" ")
+  df[['Document', 'Polarity']].to_csv(os.path.join('ft_' + df_name + '_B.txt'), index=False, sep=' ', header=None,
+                                             quoting=csv.QUOTE_NONE, quotechar="", escapechar=" ")
+  return df
 
-# Tokenization
-dat_train.iloc[:, 1] = dat_train.iloc[:, 1].apply(lambda x: ' '.join(simple_preprocess(x)))
-dat_dev.iloc[:, 1] = dat_dev.iloc[:, 1].apply(lambda x: ' '.join(simple_preprocess(x)))
-dat_test.iloc[:, 1] = dat_test.iloc[:, 1].apply(lambda x: ' '.join(simple_preprocess(x)))
-
-# Preparing Labels for fastText
-dat_train['Relevance'] = dat_train['Relevance'].astype(str).apply(lambda x: '__label__' + x)
-dat_dev['Relevance'] = dat_dev['Relevance'].astype(str).apply(lambda x: '__label__' + x)
-dat_test['Relevance'] = dat_test['Relevance'].astype(str).apply(lambda x: '__label__' + x)
-dat_train['Polarity'] = dat_train['Polarity'].astype(str).apply(lambda x: '__label__' + x)
-dat_dev['Polarity'] = dat_dev['Polarity'].astype(str).apply(lambda x: '__label__' + x)
-dat_test['Polarity'] = dat_test['Polarity'].astype(str).apply(lambda x: '__label__' + x)
-
-
-# Saving Files for fastText
-dat_train[['Document', 'Relevance']].to_csv('ft_train_A.txt', index = False, sep = ' ', header = None, quoting = csv.QUOTE_NONE, quotechar = "", escapechar = " ")
-dat_dev[['Document', 'Relevance']].to_csv('ft_dev_A.txt', index = False, sep = ' ', header = None, quoting = csv.QUOTE_NONE, quotechar = "", escapechar = " ")
-dat_test[['Document', 'Relevance']].to_csv('ft_test_A.txt', index = False, sep = ' ', header = None, quoting = csv.QUOTE_NONE, quotechar = "", escapechar = " ")
-dat_train[['Document', 'Polarity']].to_csv('ft_train_B.txt', index = False, sep = ' ', header = None, quoting = csv.QUOTE_NONE, quotechar = "", escapechar = " ")
-dat_dev[['Document', 'Polarity']].to_csv('ft_dev_B.txt', index = False, sep = ' ', header = None, quoting = csv.QUOTE_NONE, quotechar = "", escapechar = " ")
-dat_test[['Document', 'Polarity']].to_csv('ft_test_B.txt', index = False, sep = ' ', header = None, quoting = csv.QUOTE_NONE, quotechar = "", escapechar = " ")
+dat_train = fasttext_df_preprocess(dat_train, 'train')
+dat_dev = fasttext_df_preprocess(dat_dev, 'dev')
+dat_test = fasttext_df_preprocess(dat_test, 'test')
 
 # Train fastText
 model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2)
