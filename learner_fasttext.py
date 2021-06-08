@@ -1,5 +1,5 @@
 # Pakete importieren
-import csv
+import csv, os
 import numpy as np
 import pandas as pd
 import fasttext
@@ -34,8 +34,10 @@ dat_dev = fasttext_df_preprocess(dat_dev, 'dev')
 dat_test = fasttext_df_preprocess(dat_test, 'test')
 
 # Train fastText
-model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2)
-model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2)
+#model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2, epoch = 30)
+#model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2, epoch = 30)
+model_ft_A = fasttext.train_supervised(input='ft_train_A.txt', autotuneValidationFile='ft_dev_A.txt', autotuneDuration=240)
+model_ft_B = fasttext.train_supervised(input='ft_train_B.txt', autotuneValidationFile='ft_dev_B.txt', autotuneDuration=240)
 
 # Test fastText
 evaluation_model_ft_A_dev = model_ft_A.test('ft_dev_A.txt')[1:3]  # precision and recall
