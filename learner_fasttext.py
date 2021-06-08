@@ -40,7 +40,7 @@ model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2, epoch =
 model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2, epoch = 25)
 
 # Train (manually) autotuned fastText
-for x in range(200):
+for x in range(250):
     s_wordNgrams = np.random.randint(1, 5)
     s_epoch = np.random.randint(5, 61)
     s_lr = np.random.uniform(0.1, 1.0)
@@ -71,7 +71,7 @@ for x in range(200):
     if current_f1_B > best_f1_B:
         best_f1_B = current_f1_B
         best_model_ft_B_un = model_ft_B_tuned
-    print("Durchlauf", x+1, "/50")
+    print("Durchlauf", x+1, "/250")
 del model_ft_A_tuned, model_ft_B_tuned
 
 # Test fastText

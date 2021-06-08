@@ -19,8 +19,8 @@ def fasttext_df_preprocess(df, df_name):
   # Delete NAs
   df = df.dropna(subset=['URL', 'Document']).reset_index(drop=True)
   # Introduce Tokens for Twitter Usernames, but keep official DB Twitter Accounts as such
-  df['Document'] = df['Document'].str.replace("@DB_Bahn", '<ACC_DB_Bahn>', regex = True)
-  df['Document'] = df['Document'].str.replace("@Bahn_Info", '<ACC_Bahn_Info>', regex=True)
+  df['Document'] = df['Document'].str.replace("@DB_Bahn", '<DB_Bahn>', regex = True)
+  df['Document'] = df['Document'].str.replace("@Bahn_Info", '<Bahn_Info>', regex=True)
   df['Document'] = df['Document'].str.replace("@(\s?)(\w{1,15})", '<TwitterUserName>', regex=True)
   # Tokenization
   df.iloc[:, 1] = df.iloc[:, 1].apply(lambda x: ' '.join(simple_preprocess(x)))
@@ -44,7 +44,7 @@ model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2, epoch =
 model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2, epoch = 25)
 
 # Train (manually) autotuned fastText
-for x in range(200):
+for x in range(250):
     s_wordNgrams = np.random.randint(1, 5)
     s_epoch = np.random.randint(5, 61)
     s_lr = np.random.uniform(0.1, 1.0)
@@ -65,17 +65,17 @@ for x in range(200):
     current_f1_A = m_f1(model_ft_A_tuned, 'ft_dev_A.txt')
     current_f1_B = m_f1(model_ft_B_tuned, 'ft_dev_B.txt')
     if x == 0:
-        best_model_ft_A_pre = model_ft_A_tuned
+        best_model_A_ft_pre = model_ft_A_tuned
         best_f1_A = current_f1_A
-        best_model_ft_B_pre = model_ft_B_tuned
+        best_model_B_ft_pre = model_ft_B_tuned
         best_f1_B = current_f1_B
     if current_f1_A > best_f1_A:
         best_f1_A = current_f1_A
-        best_model_ft_A_pre = model_ft_A_tuned
+        best_model_A_ft_pre = model_ft_A_tuned
     if current_f1_B > best_f1_B:
         best_f1_B = current_f1_B
-        best_model_ft_B_pre = model_ft_B_tuned
-    print("Durchlauf", x+1, "/200")
+        best_model_B_ft_pre = model_ft_B_tuned
+    print("Durchlauf", x+1, "/250")
 del model_ft_A_tuned, model_ft_B_tuned
 
 # Test fastText
