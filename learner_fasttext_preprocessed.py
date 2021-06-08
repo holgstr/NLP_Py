@@ -44,7 +44,7 @@ model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2, epoch =
 model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2, epoch = 25)
 
 # Train (manually) autotuned fastText
-for x in range(30):
+for x in range(50):
     s_wordNgrams = np.random.randint(1, 5)
     s_epoch = np.random.randint(5, 61)
     s_lr = np.random.uniform(0.1, 1.0)
@@ -75,7 +75,8 @@ for x in range(30):
     if current_f1_B > best_f1_B:
         best_f1_B = current_f1_B
         best_model_B = model_ft_B_tuned
-    print(x / 30 * 100, "Prozent")
+    print("Durchlauf", x+1, "/50")
+del model_ft_A_tuned, model_ft_B_tuned
 
 # Test fastText
 # Derive Micro-F1 manually to make sure I understand how it is computed
