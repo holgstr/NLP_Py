@@ -18,6 +18,11 @@ dat_dia = pd.read_csv('/Users/holgerlowe/Documents/NLP_Data/dia.tsv', names = he
 def fasttext_df_preprocess(df, df_name):
   # Delete NAs
   df = df.dropna(subset=['URL', 'Document']).reset_index(drop=True)
+  # Adding Domain Names to Document
+  domain = df['URL'].str.extract(
+      pat='((\w|-)*(?=.com/|.de/|.at/|.eu/|.ch/|.net/|.info/|.org/|.me/|.tv/|.travel/))').iloc[:, 0]
+  domain.str.cat(df['Document'], sep=" ", na_rep=" ")
+  df['Document'] = domain.str.cat(df['Document'], sep=" ", na_rep=" ")
   # Tokenization
   df.iloc[:, 1] = df.iloc[:, 1].apply(lambda x: ' '.join(simple_preprocess(x)))
   # Preparing Labels for fastText
@@ -29,34 +34,36 @@ def fasttext_df_preprocess(df, df_name):
   df[['Document', 'Polarity']].to_csv(os.path.join('ft_' + df_name + '_B.txt'), index=False, sep=' ', header=None,
                                              quoting=csv.QUOTE_NONE, quotechar="", escapechar=" ")
   return df
-
 dat_train = fasttext_df_preprocess(dat_train, 'train')
 dat_dev = fasttext_df_preprocess(dat_dev, 'dev')
 dat_syn = fasttext_df_preprocess(dat_syn, 'syn')
 dat_dia = fasttext_df_preprocess(dat_dia, 'dia')
 
+# Derive Micro-F1 manually to make sure I understand how it is computed
+def m_f1(model, eval_file):
+  p = model.test(eval_file)[1]
+  r = model.test(eval_file)[2]
+  return 2*(p*r/(p+r))
+
 # Train fastText with naive specs
 model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2, epoch = 25)
 model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2, epoch = 25)
 
-# Train (manually) autotuned fastText
+# Train (manually) autotuned fastText, as native autotuning disadvantageous properties
 for x in range(250):
     s_wordNgrams = np.random.randint(1, 5)
     s_epoch = np.random.randint(5, 61)
     s_lr = np.random.uniform(0.1, 1.0)
-    s_dim = np.random.randint(50, 151)
     s_ws = np.random.randint(3, 8)
     model_ft_A_tuned = fasttext.train_supervised('ft_train_A.txt',
                                            wordNgrams=s_wordNgrams,
                                            epoch=s_epoch,
                                            lr= s_lr,
-                                           dim=s_dim,
                                            ws=s_ws)
     model_ft_B_tuned = fasttext.train_supervised('ft_train_B.txt',
                                            wordNgrams=s_wordNgrams,
                                            epoch=s_epoch,
                                            lr= s_lr,
-                                           dim=s_dim,
                                            ws=s_ws)
     current_f1_A = m_f1(model_ft_A_tuned, 'ft_dev_A.txt')
     current_f1_B = m_f1(model_ft_B_tuned, 'ft_dev_B.txt')
@@ -73,14 +80,10 @@ for x in range(250):
         best_model_ft_B_un = model_ft_B_tuned
     print("Durchlauf", x+1, "/250")
 del model_ft_A_tuned, model_ft_B_tuned
+best_model_ft_A_un.save_model('best_model_ft_A_un.bin')
+best_model_ft_B_un.save_model('best_model_ft_B_un.bin')
 
 # Test fastText
-# Derive Micro-F1 manually to make sure I understand how it is computed
-def m_f1(model, eval_file):
-  p = model.test(eval_file)[1]
-  r = model.test(eval_file)[2]
-  return 2*(p*r/(p+r))
-
 f1_ft_unprocessed = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B", "dia_B"],
                            'naive': [m_f1(model_ft_A, 'ft_dev_A.txt'), m_f1(model_ft_A, 'ft_syn_A.txt'),
                                      m_f1(model_ft_A, 'ft_dia_A.txt'), m_f1(model_ft_B, 'ft_dev_B.txt'),
@@ -88,7 +91,7 @@ f1_ft_unprocessed = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_
                            'tuned': [m_f1(best_model_ft_A_un, 'ft_dev_A.txt'), m_f1(best_model_ft_A_un, 'ft_syn_A.txt'),
                                      m_f1(best_model_ft_A_un, 'ft_dia_A.txt'), m_f1(best_model_ft_B_un, 'ft_dev_B.txt'),
                                      m_f1(best_model_ft_B_un, 'ft_syn_B.txt'), m_f1(best_model_ft_B_un, 'ft_dia_B.txt')]})
-
+f1_ft_unprocessed
 # Confusion Matrix
   dat_dev['Relevance_predicted_ft'] = dat_dev['Document'].apply(lambda x: model_ft_A.predict(x)[0][0])
   dat_dev['Polarity_predicted_ft'] = dat_dev['Document'].apply(lambda x: model_ft_B.predict(x)[0][0])
@@ -99,9 +102,4 @@ f1_ft_unprocessed = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_
   confusion_matrix(dat_dev['Polarity'], dat_dev['Polarity_predicted_ft'], normalize= 'all')
   confusion_matrix(dat_test['Polarity'], dat_test['Polarity_predicted_ft'], normalize= 'all')
 
-(dat_train[dat_train['URL'].str.contains('(?<=://)')]['URL']).count()
-re.findall('(?<=://)a','https://abc')
 
-
-dat_train['URL'].str.extract(pat = '((\w|-)*(?=.com/|.de/|.net/|.ch/))').iloc[120:179,0]
-pd.options.display.max_rows
