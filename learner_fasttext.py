@@ -21,7 +21,6 @@ def fasttext_df_preprocess(df, df_name):
   # Adding Domain Names to Document
   domain = df['URL'].str.extract(
       pat='((\w|-)*(?=.com/|.de/|.at/|.eu/|.ch/|.net/|.info/|.org/|.me/|.tv/|.travel/))').iloc[:, 0]
-  domain.str.cat(df['Document'], sep=" ", na_rep=" ")
   df['Document'] = domain.str.cat(df['Document'], sep=" ", na_rep=" ")
   # Tokenization
   df.iloc[:, 1] = df.iloc[:, 1].apply(lambda x: ' '.join(simple_preprocess(x)))
@@ -49,7 +48,7 @@ def m_f1(model, eval_file):
 model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2, epoch = 25)
 model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2, epoch = 25)
 
-# Train (manually) autotuned fastText, as native autotuning disadvantageous properties
+# Train (manually) autotuned fastText, as native autotuning has disadvantageous properties
 for x in range(250):
     s_wordNgrams = np.random.randint(1, 5)
     s_epoch = np.random.randint(5, 61)
@@ -101,5 +100,3 @@ f1_ft_unprocessed
   confusion_matrix(dat_test['Relevance'], dat_test['Relevance_predicted_ft'], normalize= 'all')
   confusion_matrix(dat_dev['Polarity'], dat_dev['Polarity_predicted_ft'], normalize= 'all')
   confusion_matrix(dat_test['Polarity'], dat_test['Polarity_predicted_ft'], normalize= 'all')
-
-
