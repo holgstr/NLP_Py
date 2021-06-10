@@ -68,16 +68,16 @@ for x in range(250):
     current_f1_A = m_f1(model_ft_A_tuned, 'ft_dev_A.txt')
     current_f1_B = m_f1(model_ft_B_tuned, 'ft_dev_B.txt')
     if x == 0:
-        best_model_A_ft_pre = model_ft_A_tuned
+        best_model_ft_A_pre = model_ft_A_tuned
         best_f1_A = current_f1_A
-        best_model_B_ft_pre = model_ft_B_tuned
+        best_model_ft_B_pre = model_ft_B_tuned
         best_f1_B = current_f1_B
     if current_f1_A > best_f1_A:
         best_f1_A = current_f1_A
-        best_model_A_ft_pre = model_ft_A_tuned
+        best_model_ft_A_pre = model_ft_A_tuned
     if current_f1_B > best_f1_B:
         best_f1_B = current_f1_B
-        best_model_B_ft_pre = model_ft_B_tuned
+        best_model_ft_B_pre = model_ft_B_tuned
     print("Durchlauf", x+1, "/250")
 del model_ft_A_tuned, model_ft_B_tuned
 best_model_ft_A_pre.save_model('best_model_ft_A_pre.bin')
@@ -88,7 +88,7 @@ f1_ft_preprocessed = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev
                            'naive': [m_f1(model_ft_A, 'ft_dev_A.txt'), m_f1(model_ft_A, 'ft_syn_A.txt'),
                                      m_f1(model_ft_A, 'ft_dia_A.txt'), m_f1(model_ft_B, 'ft_dev_B.txt'),
                                      m_f1(model_ft_B, 'ft_syn_B.txt'), m_f1(model_ft_B, 'ft_dia_B.txt')],
-                           'tuned': [m_f1(best_model_A_ft_pre, 'ft_dev_A.txt'), m_f1(best_model_A_ft_pre, 'ft_syn_A.txt'),
-                                     m_f1(best_model_A_ft_pre, 'ft_dia_A.txt'), m_f1(best_model_B_ft_pre, 'ft_dev_B.txt'),
-                                     m_f1(best_model_B_ft_pre, 'ft_syn_B.txt'), m_f1(best_model_B_ft_pre, 'ft_dia_B.txt')]})
+                           'tuned': [m_f1(best_model_ft_A_pre, 'ft_dev_A.txt'), m_f1(best_model_ft_A_pre, 'ft_syn_A.txt'),
+                                     m_f1(best_model_ft_A_pre, 'ft_dia_A.txt'), m_f1(best_model_ft_B_pre, 'ft_dev_B.txt'),
+                                     m_f1(best_model_ft_B_pre, 'ft_syn_B.txt'), m_f1(best_model_ft_B_pre, 'ft_dia_B.txt')]})
 f1_ft_preprocessed
