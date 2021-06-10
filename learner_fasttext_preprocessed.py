@@ -59,13 +59,11 @@ for x in range(250):
                                            wordNgrams=s_wordNgrams,
                                            epoch=s_epoch,
                                            lr= s_lr,
-                                           dim=s_dim,
                                            ws=s_ws)
     model_ft_B_tuned = fasttext.train_supervised('ft_train_B.txt',
                                            wordNgrams=s_wordNgrams,
                                            epoch=s_epoch,
                                            lr= s_lr,
-                                           dim=s_dim,
                                            ws=s_ws)
     current_f1_A = m_f1(model_ft_A_tuned, 'ft_dev_A.txt')
     current_f1_B = m_f1(model_ft_B_tuned, 'ft_dev_B.txt')
