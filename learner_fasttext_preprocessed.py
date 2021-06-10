@@ -39,6 +39,12 @@ dat_dev = fasttext_df_preprocess(dat_dev, 'dev')
 dat_syn = fasttext_df_preprocess(dat_syn, 'syn')
 dat_dia = fasttext_df_preprocess(dat_dia, 'dia')
 
+# Derive Micro-F1 manually to make sure I understand how it is computed
+def m_f1(model, eval_file):
+  p = model.test(eval_file)[1]
+  r = model.test(eval_file)[2]
+  return 2*(p*r/(p+r))
+
 # Train fastText with naive specs
 model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2, epoch = 25)
 model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2, epoch = 25)
@@ -48,7 +54,6 @@ for x in range(250):
     s_wordNgrams = np.random.randint(1, 5)
     s_epoch = np.random.randint(5, 61)
     s_lr = np.random.uniform(0.1, 1.0)
-    s_dim = np.random.randint(50, 151)
     s_ws = np.random.randint(3, 8)
     model_ft_A_tuned = fasttext.train_supervised('ft_train_A.txt',
                                            wordNgrams=s_wordNgrams,
@@ -77,14 +82,10 @@ for x in range(250):
         best_model_B_ft_pre = model_ft_B_tuned
     print("Durchlauf", x+1, "/250")
 del model_ft_A_tuned, model_ft_B_tuned
+best_model_ft_A_pre.save_model('best_model_ft_A_pre.bin')
+best_model_ft_B_pre.save_model('best_model_ft_B_pre.bin')
 
 # Test fastText
-# Derive Micro-F1 manually to make sure I understand how it is computed
-def m_f1(model, eval_file):
-  p = model.test(eval_file)[1]
-  r = model.test(eval_file)[2]
-  return 2*(p*r/(p+r))
-
 f1_ft_preprocessed = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B", "dia_B"],
                            'naive': [m_f1(model_ft_A, 'ft_dev_A.txt'), m_f1(model_ft_A, 'ft_syn_A.txt'),
                                      m_f1(model_ft_A, 'ft_dia_A.txt'), m_f1(model_ft_B, 'ft_dev_B.txt'),
@@ -92,3 +93,4 @@ f1_ft_preprocessed = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev
                            'tuned': [m_f1(best_model_A_ft_pre, 'ft_dev_A.txt'), m_f1(best_model_A_ft_pre, 'ft_syn_A.txt'),
                                      m_f1(best_model_A_ft_pre, 'ft_dia_A.txt'), m_f1(best_model_B_ft_pre, 'ft_dev_B.txt'),
                                      m_f1(best_model_B_ft_pre, 'ft_syn_B.txt'), m_f1(best_model_B_ft_pre, 'ft_dia_B.txt')]})
+f1_ft_preprocessed

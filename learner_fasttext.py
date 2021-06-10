@@ -91,6 +91,7 @@ f1_ft_unprocessed = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_
                                      m_f1(best_model_ft_A_un, 'ft_dia_A.txt'), m_f1(best_model_ft_B_un, 'ft_dev_B.txt'),
                                      m_f1(best_model_ft_B_un, 'ft_syn_B.txt'), m_f1(best_model_ft_B_un, 'ft_dia_B.txt')]})
 f1_ft_unprocessed
+
 # Confusion Matrix
   dat_dev['Relevance_predicted_ft'] = dat_dev['Document'].apply(lambda x: model_ft_A.predict(x)[0][0])
   dat_dev['Polarity_predicted_ft'] = dat_dev['Document'].apply(lambda x: model_ft_B.predict(x)[0][0])
