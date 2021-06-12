@@ -24,6 +24,8 @@ def fasttext_df_preprocess(df, df_name):
   df['Document'] = domain.str.cat(df['Document'], sep=" ", na_rep=" ")
   # Tokenization
   df.iloc[:, 1] = df.iloc[:, 1].apply(lambda x: ' '.join(simple_preprocess(x)))
+  # Replacing Misleading Names
+  df['Document'] = df['Document'].str.replace("autobahn", 'autostrasse', regex=True)
   # Preparing Labels for fastText
   df['Relevance'] = df['Relevance'].astype(str).apply(lambda x: '__label__' + x)
   df['Polarity'] = df['Polarity'].astype(str).apply(lambda x: '__label__' + x)
