@@ -46,8 +46,8 @@ model_nb_B = MultinomialNB(alpha=1.0)
 model_nb_B.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Polarity']))
 
 # Autotune Naive Bayes
-for x in range(250):
-    s_alpha = np.random.uniform(0.01, 1.0)
+for x in range(300):
+    s_alpha = np.random.uniform(3/300*(x+1))
     model_nb_A_tuned = MultinomialNB(alpha=s_alpha)
     model_nb_B_tuned = MultinomialNB(alpha=s_alpha)
     model_nb_A_tuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Relevance']))
@@ -65,7 +65,7 @@ for x in range(250):
     if current_f1_B > best_f1_B:
         best_f1_B = current_f1_B
         best_model_nb_B = model_nb_B_tuned
-    print("Durchlauf", x+1, "/250")
+    print("Durchlauf", x+1, "/300")
 
 # Test Naive Bayes
 f1_nb = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B", "dia_B"],
