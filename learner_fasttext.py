@@ -71,7 +71,7 @@ for x in range(250):
     if x == 0:
         best_model_ft_A_un = model_ft_A_tuned
         best_f1_A = current_f1_A
-        best_model_ft_un = model_ft_B_tuned
+        best_model_ft_B_un = model_ft_B_tuned
         best_f1_B = current_f1_B
     if current_f1_A > best_f1_A:
         best_f1_A = current_f1_A
