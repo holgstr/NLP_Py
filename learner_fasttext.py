@@ -6,6 +6,7 @@ import fasttext
 import matplotlib.pyplot as plt
 from gensim.utils import simple_preprocess
 from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import KFold
 
 # Daten einlesen
 header_list = ["URL", "Document", "Relevance", "Polarity"]
@@ -13,6 +14,11 @@ dat_train = pd.read_csv("/Users/holgerlowe/Documents/NLP_Data/train.tsv", names 
 dat_dev = pd.read_csv('/Users/holgerlowe/Documents/NLP_Data/dev.tsv', names = header_list, usecols = range(0,4), sep = '\t')
 dat_syn = pd.read_csv('/Users/holgerlowe/Documents/NLP_Data/syn.tsv', names = header_list, usecols = range(0,4), sep = '\t')
 dat_dia = pd.read_csv('/Users/holgerlowe/Documents/NLP_Data/dia.tsv', names = header_list, usecols = range(0,4), sep = '\t')
+
+# Duplikate aus den Trainingsdaten löschen, Daten zusammenführen
+dat_train = dat_train.drop_duplicates(subset=['Document'])
+dat_dev = dat_dev.drop_duplicates(subset=['Document'])
+dat_train = dat_train.append(dat_dev, ignore_index=True)
 
 # Daten vorbereiten für fasttext
 def fasttext_df_preprocess(df, df_name):
@@ -29,70 +35,93 @@ def fasttext_df_preprocess(df, df_name):
   # Preparing Labels for fastText
   df['Relevance'] = df['Relevance'].astype(str).apply(lambda x: '__label__' + x)
   df['Polarity'] = df['Polarity'].astype(str).apply(lambda x: '__label__' + x)
-  # Saving Files for fastText
+  # Save Files for fastText
   df[['Document', 'Relevance']].to_csv(os.path.join('ft_' + df_name + '_A.txt'), index=False, sep=' ', header=None, quoting=csv.QUOTE_NONE,
                                              quotechar="", escapechar=" ")
   df[['Document', 'Polarity']].to_csv(os.path.join('ft_' + df_name + '_B.txt'), index=False, sep=' ', header=None,
                                              quoting=csv.QUOTE_NONE, quotechar="", escapechar=" ")
   return df
 dat_train = fasttext_df_preprocess(dat_train, 'train')
-dat_dev = fasttext_df_preprocess(dat_dev, 'dev')
 dat_syn = fasttext_df_preprocess(dat_syn, 'syn')
 dat_dia = fasttext_df_preprocess(dat_dia, 'dia')
 
-# Derive Micro-F1 manually to make sure I understand how it is computed
-def m_f1(model, eval_file):
-  p = model.test(eval_file)[1]
-  r = model.test(eval_file)[2]
-  return 2*(p*r/(p+r))
+# Cross Validation vorbereiten, Folds für CV zuweisen
+folds = np.repeat([1, 2 ,3, 4, 5], dat_train.count()[0]/5)
+np.random.shuffle(folds)
+dat_train['Fold'] = folds
 
 # Train fastText with naive specs
 model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2, epoch = 25)
 model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2, epoch = 25)
 
 # Train (manually) autotuned fastText, as native autotuning has disadvantageous properties
-for x in range(250):
-    s_wordNgrams = np.random.randint(1, 5)
-    s_epoch = np.random.randint(5, 61)
-    s_lr = np.random.uniform(0.1, 1.0)
-    s_ws = np.random.randint(3, 8)
-    model_ft_A_tuned = fasttext.train_supervised('ft_train_A.txt',
-                                           wordNgrams=s_wordNgrams,
-                                           epoch=s_epoch,
-                                           lr= s_lr,
-                                           ws=s_ws)
-    model_ft_B_tuned = fasttext.train_supervised('ft_train_B.txt',
-                                           wordNgrams=s_wordNgrams,
-                                           epoch=s_epoch,
-                                           lr= s_lr,
-                                           ws=s_ws)
-    current_f1_A = m_f1(model_ft_A_tuned, 'ft_dev_A.txt')
-    current_f1_B = m_f1(model_ft_B_tuned, 'ft_dev_B.txt')
+f1_time_A = []
+f1_time_B = []
+for x in range(100): # For each hyperparameter configuration
+    params = [np.random.randint(1, 5), np.random.randint(5, 61), np.random.uniform(0.1, 1.0), np.random.randint(3, 8)]
+    current_f1_A = []
+    current_f1_B = []
+    for y in range(5):
+        train = dat_train[dat_train['Fold'] != (y+1)]
+        valid = dat_train[dat_train['Fold'] == (y+1)]
+        train[['Document', 'Relevance']].to_csv('train_A.txt', index=False, sep=' ', header=None,
+                                            quoting=csv.QUOTE_NONE, quotechar="", escapechar=" ")
+        train[['Document', 'Polarity']].to_csv('train_B.txt', index=False, sep=' ', header=None,
+                                                  quoting=csv.QUOTE_NONE, quotechar="", escapechar=" ")
+        valid[['Document', 'Relevance']].to_csv('valid_A.txt', index=False, sep=' ', header=None,
+                                                  quoting=csv.QUOTE_NONE, quotechar="", escapechar=" ")
+        valid[['Document', 'Polarity']].to_csv('valid_B.txt', index=False, sep=' ', header=None,
+                                                  quoting=csv.QUOTE_NONE, quotechar="", escapechar=" ")
+        model_ft_A_tuned = fasttext.train_supervised('train_A.txt',
+                                           wordNgrams = params[0],
+                                           epoch = params[1],
+                                           lr = params[2],
+                                           ws = params[3])
+        model_ft_B_tuned = fasttext.train_supervised('train_B.txt',
+                                           wordNgrams = params[0],
+                                           epoch =params[1],
+                                           lr = params[2],
+                                           ws = params[3])
+        current_f1_A.append(model_ft_A_tuned.test('valid_A.txt')[1])
+        current_f1_B.append(model_ft_B_tuned.test('valid_B.txt')[1])
+    current_f1_A = np.mean(current_f1_A)
+    current_f1_B = np.mean(current_f1_B)
     if x == 0:
-        best_model_ft_A_un = model_ft_A_tuned
+        best_params_A = params
         best_f1_A = current_f1_A
-        best_model_ft_B_un = model_ft_B_tuned
+        best_params_B = params
         best_f1_B = current_f1_B
     if current_f1_A > best_f1_A:
         best_f1_A = current_f1_A
-        best_model_ft_A_un = model_ft_A_tuned
+        best_params_A = params
     if current_f1_B > best_f1_B:
         best_f1_B = current_f1_B
-        best_model_ft_B_un = model_ft_B_tuned
-    print("Durchlauf", x+1, "/250")
-del model_ft_A_tuned, model_ft_B_tuned
-best_model_ft_A_un.save_model('best_model_ft_A_un.bin')
-best_model_ft_B_un.save_model('best_model_ft_B_un.bin')
+        best_params_B = params
+    f1_time_A.append(best_f1_A)
+    f1_time_B.append(best_f1_B)
+    print("Durchlauf", x+1, "/100")
+
+# Train fastText with optimal hyperparameters
+best_model_ft_A = fasttext.train_supervised('ft_train_A.txt',
+                                           wordNgrams = best_params_A[0],
+                                           epoch = best_params_A[1],
+                                           lr = best_params_A[2],
+                                           ws = best_params_A[3])
+best_model_ft_B = fasttext.train_supervised('ft_train_B.txt',
+                                           wordNgrams = best_params_B[0],
+                                           epoch = best_params_B[1],
+                                           lr = best_params_B[2],
+                                           ws = best_params_B[3])
 
 # Test fastText
-f1_ft_unprocessed = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B", "dia_B"],
-                           'naive': [m_f1(model_ft_A, 'ft_dev_A.txt'), m_f1(model_ft_A, 'ft_syn_A.txt'),
-                                     m_f1(model_ft_A, 'ft_dia_A.txt'), m_f1(model_ft_B, 'ft_dev_B.txt'),
-                                     m_f1(model_ft_B, 'ft_syn_B.txt'), m_f1(model_ft_B, 'ft_dia_B.txt')],
-                           'tuned': [m_f1(best_model_ft_A_un, 'ft_dev_A.txt'), m_f1(best_model_ft_A_un, 'ft_syn_A.txt'),
-                                     m_f1(best_model_ft_A_un, 'ft_dia_A.txt'), m_f1(best_model_ft_B_un, 'ft_dev_B.txt'),
-                                     m_f1(best_model_ft_B_un, 'ft_syn_B.txt'), m_f1(best_model_ft_B_un, 'ft_dia_B.txt')]})
-f1_ft_unprocessed
+f1_ft = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B", "dia_B"],
+                           'naive': [model_ft_A.test('ft_dev_A.txt')[1], model_ft_A.test('ft_syn_A.txt')[1],
+                                     model_ft_A.test('ft_dia_A.txt')[1], model_ft_B.test('ft_dev_B.txt')[1],
+                                     model_ft_B.test('ft_syn_B.txt')[1], model_ft_B.test('ft_dia_B.txt')[1]],
+                           'tuned': [best_model_ft_A.test('ft_dev_A.txt')[1], best_model_ft_A.test('ft_syn_A.txt')[1],
+                                     best_model_ft_A.test('ft_dia_A.txt')[1], best_model_ft_B.test('ft_dev_B.txt')[1],
+                                     best_model_ft_B.test('ft_syn_B.txt')[1], best_model_ft_B.test('ft_dia_B.txt')[1]]})
+f1_ft
 
 # Confusion Matrix
   dat_dev['Relevance_predicted_ft'] = dat_dev['Document'].apply(lambda x: model_ft_A.predict(x)[0][0])

@@ -13,6 +13,9 @@ dat_train = pd.read_csv("/Users/holgerlowe/Documents/NLP_Data/train.tsv", names 
 dat_dev = pd.read_csv('/Users/holgerlowe/Documents/NLP_Data/dev.tsv', names = header_list, usecols = range(0,4), sep = '\t')
 dat_syn = pd.read_csv('/Users/holgerlowe/Documents/NLP_Data/syn.tsv', names = header_list, usecols = range(0,4), sep = '\t')
 dat_dia = pd.read_csv('/Users/holgerlowe/Documents/NLP_Data/dia.tsv', names = header_list, usecols = range(0,4), sep = '\t')
+dat_train.count()
+dat_train = dat_train.drop_duplicates(subset=['Document'])
+dat_dev = dat_dev.drop_duplicates(subset=['Document'])
 
 # Daten vorbereiten für Naive Bayes
 def nb_df_preprocess(df):
@@ -76,3 +79,5 @@ f1_nb = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B",
                                      m_f1(best_model_nb_A, dat_dia, 'A'), m_f1(best_model_nb_B, dat_dev, 'B'),
                                      m_f1(best_model_nb_B, dat_syn, 'B'), m_f1(best_model_nb_B, dat_dia, 'B')]})
 f1_nb
+f1_nb2
+dat_dev[dat_dev['Polarity'].str.contains("t")]
