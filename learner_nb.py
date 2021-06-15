@@ -39,6 +39,7 @@ dat_dia = nb_df_preprocess(dat_dia)
 folds = np.repeat([1, 2 ,3, 4, 5], dat_train.count()[0]/5)
 np.random.shuffle(folds)
 dat_train['Fold'] = folds
+vectorizer = CountVectorizer()
 
 # Compute Micro-F1 for given model and eval_file
 def m_f1(model, eval_file, task):
@@ -50,8 +51,8 @@ def m_f1(model, eval_file, task):
 
 # Autotune Naive Bayes
 def autotune_NB(type):
-  for x in range(100):
-    s_alpha = (3 / 100 * (x + 1))
+  for x in range(150):
+    s_alpha = (3 / 150 * (x + 1))
     current_f1_A_nb = []
     current_f1_B_nb = []
     for y in range(5):  # For each fold
@@ -80,7 +81,7 @@ def autotune_NB(type):
     if current_f1_B_nb > best_f1_B_nb:
         best_f1_B_nb = current_f1_B_nb
         best_alpha_nb_B = s_alpha
-    print("Durchlauf", x + 1, "/100")
+    print("Durchlauf", x + 1, "/150")
   return [best_alpha_nb_A, best_alpha_nb_B]
 
 best_alpha_mnb = autotune_NB('Multinomial')
