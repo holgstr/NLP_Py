@@ -6,7 +6,6 @@ import fasttext
 import matplotlib.pyplot as plt
 from gensim.utils import simple_preprocess
 from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import KFold
 
 # Daten einlesen
 header_list = ["URL", "Document", "Relevance", "Polarity"]
@@ -42,6 +41,7 @@ def fasttext_df_preprocess(df, df_name):
                                              quoting=csv.QUOTE_NONE, quotechar="", escapechar=" ")
   return df
 dat_train = fasttext_df_preprocess(dat_train, 'train')
+dat_dev = fasttext_df_preprocess(dat_dev, 'dev')
 dat_syn = fasttext_df_preprocess(dat_syn, 'syn')
 dat_dia = fasttext_df_preprocess(dat_dia, 'dia')
 
