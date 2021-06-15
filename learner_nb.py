@@ -36,7 +36,7 @@ dat_syn = nb_df_preprocess(dat_syn)
 dat_dia = nb_df_preprocess(dat_dia)
 
 # Cross Validation vorbereiten, Folds für CV zuweisen
-folds = np.repeat([1, 2 ,3, 4], dat_train.count()[0]/4)
+folds = np.repeat([1, 2 ,3, 4, 5], dat_train.count()[0]/5)
 np.random.shuffle(folds)
 dat_train['Fold'] = folds
 
@@ -49,59 +49,48 @@ def m_f1(model, eval_file, task):
   return f1_score(eval_file[problem], model.predict(vectorizer.transform(eval_file['Document'])), average='micro')
 
 # Autotune Naive Bayes
-for x in range(50):
-    s_alpha = (3/50*(x+1))
-    current_f1_A_mnb = []
-    current_f1_B_mnb = []
-    current_f1_A_bnb = []
-    current_f1_B_bnb = []
-    for y in range(4):  # For each fold
+def autotune_NB(type):
+  for x in range(100):
+    s_alpha = (3 / 100 * (x + 1))
+    current_f1_A_nb = []
+    current_f1_B_nb = []
+    for y in range(5):  # For each fold
         train = dat_train[dat_train['Fold'] != (y + 1)]
         valid = dat_train[dat_train['Fold'] == (y + 1)]
-        model_mnb_A_tuned = MultinomialNB(alpha=s_alpha)
-        model_mnb_B_tuned = MultinomialNB(alpha=s_alpha)
-        model_bnb_A_tuned = BernoulliNB(alpha=s_alpha)
-        model_bnb_B_tuned = BernoulliNB(alpha=s_alpha)
-        model_mnb_A_tuned.fit(vectorizer.fit_transform(train['Document']), np.array(train['Relevance']))
-        model_mnb_B_tuned.fit(vectorizer.fit_transform(train['Document']), np.array(train['Polarity']))
-        model_bnb_A_tuned.fit(vectorizer.fit_transform(train['Document']), np.array(train['Relevance']))
-        model_bnb_B_tuned.fit(vectorizer.fit_transform(train['Document']), np.array(train['Polarity']))
-        current_f1_A_mnb.append(m_f1(model_mnb_A_tuned, valid, 'A'))
-        current_f1_B_mnb.append(m_f1(model_mnb_B_tuned, valid, 'B'))
-        current_f1_A_bnb.append(m_f1(model_bnb_A_tuned, valid, 'A'))
-        current_f1_B_bnb.append(m_f1(model_bnb_B_tuned, valid, 'B'))
-    current_f1_A_mnb = np.mean(current_f1_A_mnb)
-    current_f1_B_mnb = np.mean(current_f1_B_mnb)
-    current_f1_A_bnb = np.mean(current_f1_A_bnb)
-    current_f1_B_bnb = np.mean(current_f1_B_bnb)
+        if type == 'Bernoulli':
+            model_nb_A_tuned = BernoulliNBNB(alpha=s_alpha)
+            model_nb_B_tuned = BernoulliNB(alpha=s_alpha)
+        else:
+            model_nb_A_tuned = MultinomialNB(alpha=s_alpha)
+            model_nb_B_tuned = MultinomialNB(alpha=s_alpha)
+        model_nb_A_tuned.fit(vectorizer.fit_transform(train['Document']), np.array(train['Relevance']))
+        model_nb_B_tuned.fit(vectorizer.fit_transform(train['Document']), np.array(train['Polarity']))
+        current_f1_A_nb.append(m_f1(model_nb_A_tuned, valid, 'A'))
+        current_f1_B_nb.append(m_f1(model_nb_B_tuned, valid, 'B'))
+    current_f1_A_nb = np.mean(current_f1_A_nb)
+    current_f1_B_nb = np.mean(current_f1_B_nb)
     if x == 0:
-        best_alpha_mnb_A = s_alpha
-        best_f1_A_mnb = current_f1_A_mnb
-        best_alpha_mnb_B = s_alpha
-        best_f1_B_mnb = current_f1_B_mnb
-        best_alpha_bnb_A = s_alpha
-        best_f1_A_bnb = current_f1_A_bnb
-        best_alpha_bnb_B = s_alpha
-        best_f1_B_bnb = current_f1_B_bnb
-    if current_f1_A_mnb > best_f1_A_mnb:
-        best_f1_A_mnb = current_f1_A_mnb
-        best_alpha_mnb_A = s_alpha
-    if current_f1_B_mnb > best_f1_B_mnb:
-        best_f1_B_mnb = current_f1_B_mnb
-        best_alpha_mnb_B = s_alpha
-    if current_f1_A_bnb > best_f1_A_bnb:
-        best_f1_A_bnb = current_f1_A_bnb
-        best_alpha_bnb_A = s_alpha
-    if current_f1_B_bnb > best_f1_B_bnb:
-        best_f1_B_bnb = current_f1_B_bnb
-        best_alpha_bnb_B = s_alpha
-    print("Durchlauf", x+1, "/50")
+        best_alpha_nb_A = s_alpha
+        best_f1_A_nb = current_f1_A_nb
+        best_alpha_nb_B = s_alpha
+        best_f1_B_nb = current_f1_B_nb
+    if current_f1_A_nb > best_f1_A_nb:
+        best_f1_A_nb = current_f1_A_nb
+        best_alpha_nb_A = s_alpha
+    if current_f1_B_nb > best_f1_B_nb:
+        best_f1_B_nb = current_f1_B_nb
+        best_alpha_nb_B = s_alpha
+    print("Durchlauf", x + 1, "/100")
+  return [best_alpha_nb_A, best_alpha_nb_B]
+
+best_alpha_mnb = autotune_NB('Multinomial')
+best_alpha_bnb = autotune_NB('Binomial')
 
 # Train Naive Bayes with optimal hyperparameters
-model_mnb_A_tuned = MultinomialNB(alpha=best_alpha_mnb_A)
-model_mnb_B_tuned = MultinomialNB(alpha=best_alpha_mnb_B)
-model_bnb_A_tuned = BernoulliNB(alpha=best_alpha_bnb_A)
-model_bnb_B_tuned = BernoulliNB(alpha=best_alpha_bnb_B)
+model_mnb_A_tuned = MultinomialNB(alpha=best_alpha_mnb[0])
+model_mnb_B_tuned = MultinomialNB(alpha=best_alpha_mnb[1])
+model_bnb_A_tuned = BernoulliNB(alpha=best_alpha_bnb[0])
+model_bnb_B_tuned = BernoulliNB(alpha=best_alpha_bnb[1])
 model_mnb_A_tuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Relevance']))
 model_mnb_B_tuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Polarity']))
 model_bnb_A_tuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Relevance']))
