@@ -56,7 +56,7 @@ model_ft_B = fasttext.train_supervised('ft_train_B.txt')
 # Manually conduct hyperparameter optimization using CV on train+dev, as fastText-native autotuning search space is too large
 f1_time_A = []
 f1_time_B = []
-for x in range(50): # For each hyperparameter configuration
+for x in range(100): # For each hyperparameter configuration
     params = [np.random.randint(1, 5), np.random.randint(5, 61), np.random.uniform(0.1, 1.0), np.random.randint(3, 8)]
     current_f1_A = []
     current_f1_B = []
