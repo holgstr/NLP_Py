@@ -44,6 +44,7 @@ dat_syn = fasttext_df_preprocess(dat_syn, 'syn')
 dat_dia = fasttext_df_preprocess(dat_dia, 'dia')
 
 # Cross Validation vorbereiten, Folds für CV zuweisen
+np.random.seed(2021)
 folds = np.repeat([1, 2 ,3, 4, 5], dat_train.count()[0]/5)
 np.random.shuffle(folds)
 dat_train['Fold'] = folds
