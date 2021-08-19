@@ -2,9 +2,10 @@
 import csv
 import numpy as np
 import pandas as pd
+import sklearn.feature_selection
 from gensim.utils import simple_preprocess
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import BernoulliNB, MultinomialNB
+from sklearn.naive_bayes import BernoulliNB, MultinomialNB, ComplementNB
 from sklearn.metrics import f1_score
 
 # Daten einlesen
@@ -36,11 +37,12 @@ dat_syn = nb_df_preprocess(dat_syn)
 dat_dia = nb_df_preprocess(dat_dia)
 
 # Cross Validation vorbereiten, Folds für CV zuweisen
-folds = np.repeat([1, 2 ,3, 4, 5], dat_train.count()[0]/5)
+np.random.seed(2021)
+folds = np.repeat([1, 2 ,3, 4, 5, 6, 7, 8, 9, 10], dat_train.count()[0]/10)
 np.random.shuffle(folds)
 dat_train['Fold'] = folds
 vectorizer = CountVectorizer()
-
+vectorizer.fit_transform(dat_train['Document'])
 # Compute Micro-F1 for given model and eval_file
 def m_f1(model, eval_file, task):
   if task == 'A':
@@ -51,16 +53,19 @@ def m_f1(model, eval_file, task):
 
 # Autotune Naive Bayes
 def autotune_NB(type):
-  for x in range(3):
-    s_alpha = (3 / 150 * (x + 1))
+  for x in range(2):
+    s_alpha = np.random.uniform(0.001, 3.0)
     current_f1_A_nb = []
     current_f1_B_nb = []
-    for y in range(5):  # For each fold
+    for y in range(10):  # For each fold
         train = dat_train[dat_train['Fold'] != (y + 1)]
         valid = dat_train[dat_train['Fold'] == (y + 1)]
-        if type == 'Bernoulli':
-            model_nb_A_tuned = BernoulliNBNB(alpha=s_alpha)
+        if type == "Bernoulli":
+            model_nb_A_tuned = BernoulliNB(alpha=s_alpha)
             model_nb_B_tuned = BernoulliNB(alpha=s_alpha)
+        if type == "Complement":
+            model_nb_A_tuned = ComplementNB(alpha=s_alpha)
+            model_nb_B_tuned = ComplementNB(alpha=s_alpha)
         else:
             model_nb_A_tuned = MultinomialNB(alpha=s_alpha)
             model_nb_B_tuned = MultinomialNB(alpha=s_alpha)
@@ -81,11 +86,12 @@ def autotune_NB(type):
     if current_f1_B_nb > best_f1_B_nb:
         best_f1_B_nb = current_f1_B_nb
         best_alpha_nb_B = s_alpha
-   print("Durchlauf", x + 1, "/150")
+    print("Durchlauf", x + 1, "/50")
   return [best_alpha_nb_A, best_alpha_nb_B]
 
 best_alpha_mnb = autotune_NB('Multinomial')
-best_alpha_bnb = autotune_NB('Binomial')
+best_alpha_mnb = autotune_NB('Bernoulli')
+best_alpha_bnb = autotune_NB('Complement')
 
 # Train Naive Bayes with optimal hyperparameters
 model_mnb_A_tuned = MultinomialNB(alpha=best_alpha_mnb[0])
@@ -105,4 +111,29 @@ f1_nb = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B",
                            'tuned BNB': [m_f1(model_bnb_A_tuned, dat_dev, 'A'), m_f1(model_bnb_A_tuned, dat_syn, 'A'),
                                          m_f1(model_bnb_A_tuned, dat_dia, 'A'), m_f1(model_bnb_B_tuned, dat_dev, 'B'),
                                          m_f1(model_bnb_B_tuned, dat_syn, 'B'), m_f1(model_bnb_B_tuned, dat_dia, 'B')]})
+f1_nb
+
+vectorizer = CountVectorizer(max_df=1000)
+model_mnb_A_untuned = MultinomialNB(alpha=1)
+train = vectorizer.fit_transform(dat_train['Document'])
+train = train.toarray()
+
+from sklearn.feature_selection import chi2
+listchi2 = chi2(train, np.array(dat_train['Polarity']))[0]
+ind = np.argpartition(listchi2, -20)[-20:]
+print(np.array(vectorizer.get_feature_names())[ind])
+
+model_mnb_A_untuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Relevance']))
+m_f1(model_mnb_A_untuned, dat_dia, 'A')
+train
+model_mnb_A_untuned.predict_proba(vectorizer.transform(dat_dia["Document"].iloc[4:5]))
+model_mnb_A_untuned.predict(vectorizer.transform(dat_dia['Document'].iloc[4:5]))
+f1_score(dat_train['Polarity'], model_mnb_A_untuned.predict(train))
+model_mnb_A_untuned.score(vectorizer.transform(dat_train["Document"]), dat_train['Polarity'])
+
+# Test Naive Bayes
+f1_nb = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B", "dia_B"],
+                           'tuned MNB': [m_f1(model_mnb_A_tuned, dat_dev, 'A'), m_f1(model_mnb_A_tuned, dat_syn, 'A'),
+                                         m_f1(model_mnb_A_tuned, dat_dia, 'A'), m_f1(model_mnb_B_tuned, dat_dev, 'B'),
+                                         m_f1(model_mnb_B_tuned, dat_syn, 'B'), m_f1(model_mnb_B_tuned, dat_dia, 'B')]})
 f1_nb

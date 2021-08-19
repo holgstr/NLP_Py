@@ -49,17 +49,17 @@ np.random.shuffle(folds)
 dat_train['Fold'] = folds
 
 # Train fastText with naive specs
-model_ft_A = fasttext.train_supervised('ft_train_A.txt', wordNgrams = 2, epoch = 25)
-model_ft_B = fasttext.train_supervised('ft_train_B.txt', wordNgrams = 2, epoch = 25)
+model_ft_A = fasttext.train_supervised('ft_train_A.txt')
+model_ft_B = fasttext.train_supervised('ft_train_B.txt')
 
 # Manually conduct hyperparameter optimization using CV on train+dev, as fastText-native autotuning search space is too large
 f1_time_A = []
 f1_time_B = []
-for x in range(300): # For each hyperparameter configuration
+for x in range(50): # For each hyperparameter configuration
     params = [np.random.randint(1, 5), np.random.randint(5, 61), np.random.uniform(0.1, 1.0), np.random.randint(3, 8)]
     current_f1_A = []
     current_f1_B = []
-    for y in range(5): # For each fold
+    for y in range(10): # For each fold
         train = dat_train[dat_train['Fold'] != (y+1)]
         valid = dat_train[dat_train['Fold'] == (y+1)]
         train[['Document', 'Relevance']].to_csv('train_A.txt', index=False, sep=' ', header=None,
@@ -132,5 +132,3 @@ f1_ft
   confusion_matrix(dat_test['Polarity'], dat_test['Polarity_predicted_ft'], normalize= 'all')
 
 dat_train[dat_train["Document"].str.contains("da geht die klimaanlage")]
-dat_train.iloc[90,1]
-Gut, dass mein Auto nicht von der Bahn betrieben wird. Da geht die Klimaanlage drin ^^
