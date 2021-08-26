@@ -18,6 +18,7 @@ dat_dia = pd.read_csv('/Users/holgerlowe/Documents/NLP_Data/dia.tsv', names = he
 dat_train = dat_train.drop_duplicates(subset=['Document'])
 dat_dev = dat_dev.drop_duplicates(subset=['Document'])
 dat_train = dat_train.append(dat_dev, ignore_index=True)
+dat_train2 = dat_train
 
 # Daten vorbereiten für fasttext
 def fasttext_df_preprocess(df, df_name):
@@ -124,4 +125,11 @@ f1_ft = pd.DataFrame(data={'data': ["syn_A", "dia_A", "syn_B", "dia_B"],
                                      best_model_ft_B.test('ft_dia_B.txt')[1]]})
 f1_ft
 
-# Zusatzbeispiel: Generate Word Embeddings on Data Set
+# Zusatzbeispiel: Generate Word Embeddings on Data
+dat_train2 = dat_train2.dropna(subset=['URL', 'Document']).reset_index(drop=True)
+dat_train2.iloc[:, 1] = dat_train2.iloc[:, 1].apply(lambda x: ' '.join(simple_preprocess(x)))
+dat_train2[['Document']].to_csv('ft_corpus.txt', index=False, sep=' ', header=None,
+                                     quoting=csv.QUOTE_NONE,
+                                     quotechar="", escapechar=" ")
+model1 = fasttext.train_unsupervised('ft_corpus.txt', minCount = 5, minn = 2, maxn = 5, dim = 300)
+model1.get_nearest_neighbors('gleis')
