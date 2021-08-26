@@ -54,7 +54,7 @@ def m_f1(model, eval_file, task):
 
 # Autotune Naive Bayes
 def autotune_NB(type):
-  for x in range(50):
+  for x in range(100):
     s_alpha = np.random.uniform(0.001, 3.0)
     current_f1_A_nb = []
     current_f1_B_nb = []
@@ -87,7 +87,7 @@ def autotune_NB(type):
     if current_f1_B_nb > best_f1_B_nb:
         best_f1_B_nb = current_f1_B_nb
         best_alpha_nb_B = s_alpha
-    print("Durchlauf", x + 1, "/50")
+    print("Durchlauf", x + 1, "/100")
   return [best_alpha_nb_A, best_alpha_nb_B, best_f1_A_nb, best_f1_B_nb, type]
 
 best_alpha_mnb = autotune_NB('Multinomial')
