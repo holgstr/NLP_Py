@@ -38,8 +38,8 @@ def fasttext_df_preprocess(df, df_name):
   df[['Document', 'Polarity']].to_csv(os.path.join('ft_' + df_name + '_B.txt'), index=False, sep=' ', header=None,
                                              quoting=csv.QUOTE_NONE, quotechar="", escapechar=" ")
   return df
+
 dat_train = fasttext_df_preprocess(dat_train, 'train')
-dat_dev = fasttext_df_preprocess(dat_dev, 'dev')
 dat_syn = fasttext_df_preprocess(dat_syn, 'syn')
 dat_dia = fasttext_df_preprocess(dat_dia, 'dia')
 
@@ -48,10 +48,6 @@ np.random.seed(2021)
 folds = np.repeat([1, 2 ,3, 4, 5], dat_train.count()[0]/5)
 np.random.shuffle(folds)
 dat_train['Fold'] = folds
-
-# Train fastText with naive specs
-model_ft_A = fasttext.train_supervised('ft_train_A.txt')
-model_ft_B = fasttext.train_supervised('ft_train_B.txt')
 
 # Manually conduct hyperparameter optimization using CV on train+dev, as fastText-native autotuning search space is too large
 f1_time_A = []
@@ -112,24 +108,20 @@ best_model_ft_B = fasttext.train_supervised('ft_train_B.txt',
                                            lr = best_params_B[2],
                                            ws = best_params_B[3])
 
+# Train fastText with naive specs
+model_ft_A = fasttext.train_supervised('ft_train_A.txt')
+model_ft_B = fasttext.train_supervised('ft_train_B.txt')
+
 # Test fastText
-f1_ft = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B", "dia_B"],
-                           'naive': [model_ft_A.test('ft_dev_A.txt')[1], model_ft_A.test('ft_syn_A.txt')[1],
-                                     model_ft_A.test('ft_dia_A.txt')[1], model_ft_B.test('ft_dev_B.txt')[1],
-                                     model_ft_B.test('ft_syn_B.txt')[1], model_ft_B.test('ft_dia_B.txt')[1]],
-                           'tuned': [best_model_ft_A.test('ft_dev_A.txt')[1], best_model_ft_A.test('ft_syn_A.txt')[1],
-                                     best_model_ft_A.test('ft_dia_A.txt')[1], best_model_ft_B.test('ft_dev_B.txt')[1],
-                                     best_model_ft_B.test('ft_syn_B.txt')[1], best_model_ft_B.test('ft_dia_B.txt')[1]]})
+f1_ft = pd.DataFrame(data={'data': ["syn_A", "dia_A", "syn_B", "dia_B"],
+                           'naive': [model_ft_A.test('ft_syn_A.txt')[1],
+                                     model_ft_A.test('ft_dia_A.txt')[1],
+                                     model_ft_B.test('ft_syn_B.txt')[1],
+                                     model_ft_B.test('ft_dia_B.txt')[1]],
+                           'tuned': [best_model_ft_A.test('ft_syn_A.txt')[1],
+                                     best_model_ft_A.test('ft_dia_A.txt')[1],
+                                     best_model_ft_B.test('ft_syn_B.txt')[1],
+                                     best_model_ft_B.test('ft_dia_B.txt')[1]]})
 f1_ft
 
-# Confusion Matrix
-  dat_dev['Relevance_predicted_ft'] = dat_dev['Document'].apply(lambda x: model_ft_A.predict(x)[0][0])
-  dat_dev['Polarity_predicted_ft'] = dat_dev['Document'].apply(lambda x: model_ft_B.predict(x)[0][0])
-  dat_test['Relevance_predicted_ft'] = dat_test['Document'].apply(lambda x: model_ft_A.predict(x)[0][0])
-  dat_test['Polarity_predicted_ft'] = dat_test['Document'].apply(lambda x: model_ft_B.predict(x)[0][0])
-  confusion_matrix(dat_dev['Relevance'], dat_dev['Relevance_predicted_ft'], normalize= 'all')
-  confusion_matrix(dat_test['Relevance'], dat_test['Relevance_predicted_ft'], normalize= 'all')
-  confusion_matrix(dat_dev['Polarity'], dat_dev['Polarity_predicted_ft'], normalize= 'all')
-  confusion_matrix(dat_test['Polarity'], dat_test['Polarity_predicted_ft'], normalize= 'all')
-
-dat_train[dat_train["Document"].str.contains("da geht die klimaanlage")]
+# Zusatzbeispiel: Generate Word Embeddings on Data Set
