@@ -125,11 +125,15 @@ f1_ft = pd.DataFrame(data={'data': ["syn_A", "dia_A", "syn_B", "dia_B"],
                                      best_model_ft_B.test('ft_dia_B.txt')[1]]})
 f1_ft
 
-# Zusatzbeispiel: Generate Word Embeddings on Data
+
+
+###### Text Example: Generate Word Embeddings on Data
 dat_train2 = dat_train2.dropna(subset=['URL', 'Document']).reset_index(drop=True)
 dat_train2.iloc[:, 1] = dat_train2.iloc[:, 1].apply(lambda x: ' '.join(simple_preprocess(x)))
 dat_train2[['Document']].to_csv('ft_corpus.txt', index=False, sep=' ', header=None,
                                      quoting=csv.QUOTE_NONE,
                                      quotechar="", escapechar=" ")
-model1 = fasttext.train_unsupervised('ft_corpus.txt', minCount = 5, minn = 2, maxn = 5, dim = 300)
+model1 = fasttext.train_unsupervised('ft_corpus.txt', minCount = 5, minn = 2, maxn = 5, dim = 300) # train word vectors
 model1.get_nearest_neighbors('gleis')
+model2 = fasttext.load_model('cc.de.300.bin') # load pre-trained model
+model2.get_nearest_neighbors('gleis')
