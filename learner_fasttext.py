@@ -50,7 +50,7 @@ folds = np.repeat([1, 2 ,3, 4, 5], dat_train.count()[0]/5)
 np.random.shuffle(folds)
 dat_train['Fold'] = folds
 
-# Manually conduct hyperparameter optimization using CV on train+dev, as fastText-native autotuning search space is too large
+# Manually conduct hyperparameter optimization using CV on train+dev
 f1_time_A = []
 f1_time_B = []
 for x in range(100): # For each hyperparameter configuration
