@@ -88,7 +88,7 @@ def autotune_NB(type):
         best_f1_B_nb = current_f1_B_nb
         best_alpha_nb_B = s_alpha
     print("Durchlauf", x + 1, "/50")
-  return [best_alpha_nb_A, best_alpha_nb_B, best_f1_A_nb, best_f1_B_nb]
+  return [best_alpha_nb_A, best_alpha_nb_B, best_f1_A_nb, best_f1_B_nb, type]
 
 best_alpha_mnb = autotune_NB('Multinomial')
 best_alpha_bnb = autotune_NB('Bernoulli')
@@ -105,16 +105,25 @@ model_mnb_A_tuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(
 model_mnb_B_tuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Polarity']))
 model_bnb_A_tuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Relevance']))
 model_bnb_B_tuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Polarity']))
+model_cnb_A_tuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Relevance']))
+model_cnb_B_tuned.fit(vectorizer.fit_transform(dat_train['Document']), np.array(dat_train['Polarity']))
 
 # Test Naive Bayes
-f1_nb = pd.DataFrame(data={'data': ["dev_A", "syn_A", "dia_A", "dev_B", "syn_B", "dia_B"],
-                           'tuned MNB': [m_f1(model_mnb_A_tuned, dat_dev, 'A'), m_f1(model_mnb_A_tuned, dat_syn, 'A'),
-                                         m_f1(model_mnb_A_tuned, dat_dia, 'A'), m_f1(model_mnb_B_tuned, dat_dev, 'B'),
-                                         m_f1(model_mnb_B_tuned, dat_syn, 'B'), m_f1(model_mnb_B_tuned, dat_dia, 'B')],
-                           'tuned BNB': [m_f1(model_bnb_A_tuned, dat_dev, 'A'), m_f1(model_bnb_A_tuned, dat_syn, 'A'),
-                                         m_f1(model_bnb_A_tuned, dat_dia, 'A'), m_f1(model_bnb_B_tuned, dat_dev, 'B'),
-                                         m_f1(model_bnb_B_tuned, dat_syn, 'B'), m_f1(model_bnb_B_tuned, dat_dia, 'B')]})
+f1_nb = pd.DataFrame(data={'data': ["syn_A", "dia_A", "syn_B", "dia_B"],
+                           'tuned MNB': [m_f1(model_mnb_A_tuned, dat_syn, 'A'),
+                                         m_f1(model_mnb_A_tuned, dat_dia, 'A'),
+                                         m_f1(model_mnb_B_tuned, dat_syn, 'B'),
+                                         m_f1(model_mnb_B_tuned, dat_dia, 'B')],
+                           'tuned BNB': [m_f1(model_bnb_A_tuned, dat_syn, 'A'),
+                                         m_f1(model_bnb_A_tuned, dat_dia, 'A'),
+                                         m_f1(model_bnb_B_tuned, dat_syn, 'B'),
+                                         m_f1(model_bnb_B_tuned, dat_dia, 'B')]
+                           'tuned CNB': [m_f1(model_cnb_A_tuned, dat_syn, 'A'),
+                                         m_f1(model_cnb_A_tuned, dat_dia, 'A'),
+                                         m_f1(model_cnb_B_tuned, dat_syn, 'B'),
+                                         m_f1(model_cnb_B_tuned, dat_dia, 'B')]})
 f1_nb
+
 
 
 ### Text Example: Select 20 words by highest Chi2 Criterion
