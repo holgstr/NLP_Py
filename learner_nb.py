@@ -54,7 +54,7 @@ def m_f1(model, eval_file, task):
 
 # Autotune Naive Bayes
 def autotune_NB(type):
-  for x in range(3):
+  for x in range(50):
     s_alpha = np.random.uniform(0.001, 3.0)
     current_f1_A_nb = []
     current_f1_B_nb = []
@@ -117,7 +117,7 @@ f1_nb = pd.DataFrame(data={'data': ["syn_A", "dia_A", "syn_B", "dia_B"],
                            'tuned BNB': [m_f1(model_bnb_A_tuned, dat_syn, 'A'),
                                          m_f1(model_bnb_A_tuned, dat_dia, 'A'),
                                          m_f1(model_bnb_B_tuned, dat_syn, 'B'),
-                                         m_f1(model_bnb_B_tuned, dat_dia, 'B')]
+                                         m_f1(model_bnb_B_tuned, dat_dia, 'B')],
                            'tuned CNB': [m_f1(model_cnb_A_tuned, dat_syn, 'A'),
                                          m_f1(model_cnb_A_tuned, dat_dia, 'A'),
                                          m_f1(model_cnb_B_tuned, dat_syn, 'B'),
