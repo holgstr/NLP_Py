@@ -3,9 +3,7 @@ import csv, os
 import numpy as np
 import pandas as pd
 import fasttext
-import matplotlib.pyplot as plt
 from gensim.utils import simple_preprocess
-from sklearn.metrics import confusion_matrix
 
 # Daten einlesen
 header_list = ["URL", "Document", "Relevance", "Polarity"]
