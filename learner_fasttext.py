@@ -46,7 +46,7 @@ dat_dia = fasttext_df_preprocess(dat_dia, 'dia')
 
 # Cross Validation vorbereiten, Folds für CV zuweisen
 np.random.seed(2021)
-folds = np.repeat([1, 2 ,3, 4, 5], dat_train.count()[0]/5)
+folds = np.repeat([1, 2 ,3, 4, 5, 6, 7, 8, 9, 10], dat_train.count()[0]/10)
 np.random.shuffle(folds)
 dat_train['Fold'] = folds
 
@@ -93,6 +93,7 @@ for x in range(100): # For each hyperparameter configuration
     if current_f1_B > best_f1_B:
         best_f1_B = current_f1_B
         best_params_B = params
+    print("Best CV F1 Task A:", best_f1_A, "Task B:", best_f1_B)
     f1_time_A.append(best_f1_A)
     f1_time_B.append(best_f1_B)
     print("Durchlauf", x+1, "/100")
